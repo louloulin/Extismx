@@ -1,0 +1,27 @@
+{
+	"name": "extism-mastra-plugin-demo",
+	"version": "0.1.0",
+	"description": "Demo implementation of Extism plugins for Mastra tools",
+	"scripts": {
+		"build": "tsc",
+		"test-plugin": "node dist/host.js",
+		"test-integration": "node dist/mastra-integration.js",
+		"test-registry": "node dist/registry-test.js",
+		"test-go-plugin": "cd src/go-pdk && make hello && node test_plugin.js",
+		"test-python-plugin": "cd src/python-pdk && node test_plugin.js",
+		"test-rust-plugin": "cd src/rust-pdk && node test_plugin.js",
+		"test-cpp-plugin": "cd src/cpp-pdk && node test_plugin.js",
+		"test-community": "node dist/community-test.js",
+		"test-enterprise": "node dist/enterprise-test.js",
+		"test": "npm run build && npm run test-plugin && npm run test-integration && npm run test-registry && npm run test-community && npm run test-enterprise"
+	},
+	"dependencies": {
+		"@extism/extism": "2.0.0-rc11"
+	},
+	"devDependencies": {
+		"typescript": "^5.2.2"
+	},
+	"bin": {
+		"extism-registry": "dist/registry-cli.js"
+	}
+}

@@ -1,0 +1,11 @@
+{
+  "name": "hello-python-plugin",
+  "version": "0.1.0",
+  "description": "A simple hello world plugin written in Python",
+  "author": "Extism",
+  "license": "MIT",
+  "keywords": ["extism", "plugin", "python", "hello"],
+  "language": "python",
+  "runtime": "wasm",
+  "exports": ["hello"]
+} 

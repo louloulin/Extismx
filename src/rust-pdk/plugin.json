@@ -1,0 +1,34 @@
+{
+  "name": "hello-rust",
+  "version": "0.1.0",
+  "description": "A simple Extism plugin written in Rust",
+  "author": "Extism Authors <authors@extism.org>",
+  "license": "MIT",
+  "keywords": ["hello", "greeting", "rust"],
+  "language": "rust",
+  "runtime": "wasm",
+  "wasm": [
+    {
+      "path": "hello.wasm",
+      "name": "main"
+    }
+  ],
+  "exports": [
+    {
+      "name": "hello",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "string",
+          "optional": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "greeting",
+          "type": "string"
+        }
+      ]
+    }
+  ]
+} 

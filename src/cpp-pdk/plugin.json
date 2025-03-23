@@ -1,0 +1,38 @@
+{
+  "name": "hello-cpp",
+  "version": "0.1.0",
+  "description": "Simple Extism plugins written in C and C++",
+  "author": "Extism Authors <authors@extism.org>",
+  "license": "MIT",
+  "keywords": ["hello", "greeting", "c", "cpp"],
+  "language": "c/cpp",
+  "runtime": "wasm",
+  "wasm": [
+    {
+      "path": "hello_cpp.wasm",
+      "name": "cpp-plugin"
+    },
+    {
+      "path": "hello_c.wasm",
+      "name": "c-plugin"
+    }
+  ],
+  "exports": [
+    {
+      "name": "hello",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "string",
+          "optional": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "greeting",
+          "type": "string"
+        }
+      ]
+    }
+  ]
+} 

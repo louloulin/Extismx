@@ -1,0 +1,11 @@
+{
+  "name": "hello-go-plugin",
+  "version": "0.1.0",
+  "description": "A simple hello world plugin written in Go",
+  "author": "Extism",
+  "license": "MIT",
+  "keywords": ["extism", "plugin", "go", "hello"],
+  "language": "go",
+  "runtime": "wasm",
+  "exports": ["hello"]
+} 

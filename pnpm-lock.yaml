@@ -1,0 +1,22 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@extism/extism':
+        specifier: 2.0.0-rc11
+        version: 2.0.0-rc11
+
+packages:
+
+  '@extism/extism@2.0.0-rc11':
+    resolution: {integrity: sha512-+vjXOjQbCLpIAkMZjqkDIT4WUp2FA0mglj3a4nBpCp/gjDngiFqG6TmXP0esOubktY2EUklFiPCeaDr/sQXzKA==}
+
+snapshots:
+
+  '@extism/extism@2.0.0-rc11': {}
