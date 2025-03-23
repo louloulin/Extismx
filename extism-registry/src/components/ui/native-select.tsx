@@ -1,9 +1,9 @@
 import React, { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+export interface NativeSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
 
-const Select = forwardRef<HTMLSelectElement, SelectProps>(
+const NativeSelect = forwardRef<HTMLSelectElement, NativeSelectProps>(
   ({ className, children, ...props }, ref) => {
     return (
       <select
@@ -20,6 +20,6 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
   }
 );
 
-Select.displayName = "Select";
+NativeSelect.displayName = "NativeSelect";
 
-export { Select };
+export { NativeSelect };

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search } from "@/components/ui/search";
-import { Select } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
 
 interface Plugin {
@@ -182,18 +182,18 @@ export default function PackagesPage() {
           </div>
           <div className="flex flex-1 gap-4">
             <div className="flex-1">
-              <Select value={selectedLanguage} onChange={handleLanguageChange}>
+              <NativeSelect value={selectedLanguage} onChange={handleLanguageChange}>
                 {languageOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
             <div className="flex-1">
-              <Select value={sortBy} onChange={handleSortChange}>
+              <NativeSelect value={sortBy} onChange={handleSortChange}>
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
           </div>
         </div>

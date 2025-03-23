@@ -1,10 +1,13 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { InstallationSteps } from '@/components/ui/installation-steps';
 
 // 模拟的插件数据，在实际应用中这会从API获取
 const mockPlugins = [
@@ -77,229 +80,265 @@ const languageColors: Record<string, string> = {
 };
 
 export default function PackageDetailPage({ params }: { params: { name: string } }) {
-  // 在实际应用中，这会是一个API调用
+  const [selectedLanguage, setSelectedLanguage] = useState<'typescript' | 'python' | 'go' | 'rust' | 'cpp'>('typescript');
+  
+  // 查找对应的插件数据
   const plugin = mockPlugins.find(p => p.name === params.name);
   
+  // 如果找不到对应插件，返回404
   if (!plugin) {
     notFound();
   }
 
   return (
-    <div className="container mx-auto py-12 px-4">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="flex-1">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-3xl font-bold">{plugin.name}</h1>
-                <Badge variant="outline" className="ml-2">v{plugin.version}</Badge>
+    <div className="container mx-auto py-10">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold">{plugin.name}</h1>
+                  <Badge>{plugin.language}</Badge>
+                  <span className="text-sm text-muted-foreground">v{plugin.version}</span>
+                </div>
+                <p className="mt-2 text-muted-foreground">{plugin.description}</p>
               </div>
-              <p className="text-muted-foreground">{plugin.description}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-0">
-                  {plugin.language}
-                </Badge>
-                <span className="text-sm text-muted-foreground">{plugin.downloads.toLocaleString()} downloads</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={plugin.repository} target="_blank">
+                    Repository
+                  </Link>
+                </Button>
+                <Button size="sm">
+                  Install
+                </Button>
               </div>
             </div>
-            <div className="flex gap-3">
-              <Button size="sm" variant="secondary" asChild>
-                <a href={plugin.repository} target="_blank" rel="noopener noreferrer">GitHub</a>
-              </Button>
-              <Button size="sm">Install</Button>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{plugin.downloads.toLocaleString()}</div>
+                    <p className="text-sm text-muted-foreground">Downloads</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{plugin.license}</div>
+                    <p className="text-sm text-muted-foreground">License</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{plugin.author}</div>
+                    <p className="text-sm text-muted-foreground">Author</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Card>
-              <CardHeader className="p-4">
-                <CardTitle className="text-sm font-medium">Version</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <p className="text-2xl font-semibold">{plugin.version}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="p-4">
-                <CardTitle className="text-sm font-medium">License</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <p className="text-2xl font-semibold">{plugin.license}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="p-4">
-                <CardTitle className="text-sm font-medium">Downloads</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <p className="text-2xl font-semibold">{plugin.downloads.toLocaleString()}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Tabs defaultValue="readme" className="mb-8">
-            <TabsList className="mb-4">
-              <TabsTrigger value="readme">README</TabsTrigger>
-              <TabsTrigger value="usage">Usage Examples</TabsTrigger>
-              <TabsTrigger value="installation">Installation</TabsTrigger>
-              <TabsTrigger value="versions">Versions</TabsTrigger>
-            </TabsList>
-            <TabsContent value="readme" className="mt-0">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="prose dark:prose-invert max-w-none">
-                    {plugin.readme.split('\n').map((line, i) => {
-                      if (line.startsWith('# ')) {
-                        return <h1 key={i} className="text-2xl font-bold mt-4 mb-2">{line.substring(2)}</h1>;
-                      } else if (line.startsWith('## ')) {
-                        return <h2 key={i} className="text-xl font-semibold mt-4 mb-2">{line.substring(3)}</h2>;
-                      } else if (line.startsWith('```')) {
-                        return line.length > 3 ? 
-                          <pre key={i} className="bg-muted p-4 rounded-md mt-2 mb-2 overflow-x-auto">
-                            <code className="text-sm">{line.substring(3)}</code>
-                          </pre> : 
-                          <div key={i} className="mt-2 mb-2"></div>;
-                      } else {
-                        return <p key={i} className="my-2">{line}</p>;
-                      }
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="usage" className="mt-0">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Usage Examples</h3>
-                  <Tabs defaultValue={plugin.usage[0].language}>
-                    <TabsList className="mb-4">
-                      {plugin.usage.map((example) => (
-                        <TabsTrigger key={example.language} value={example.language}>
-                          {example.language}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                    {plugin.usage.map((example) => (
-                      <TabsContent key={example.language} value={example.language}>
-                        <div className={`p-1 rounded-t-md ${languageColors[example.language]}`}>
-                          <span className="text-xs font-medium px-2">{example.language}</span>
-                        </div>
-                        <pre className="bg-muted p-4 rounded-b-md overflow-x-auto">
-                          <code className="text-sm whitespace-pre">{example.code}</code>
-                        </pre>
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="installation" className="mt-0">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Installation Instructions</h3>
-                  <div className="mb-4">
-                    <p className="mb-2">Install using npm:</p>
-                    <pre className="bg-muted p-4 rounded-md overflow-x-auto">
-                      <code className="text-sm">npm install {plugin.name}@{plugin.version}</code>
-                    </pre>
-                  </div>
-                  <div>
-                    <p className="mb-2">Or download directly:</p>
-                    <pre className="bg-muted p-4 rounded-md overflow-x-auto">
-                      <code className="text-sm">curl -L https://registry.extism.org/plugins/{plugin.name}/download/{plugin.version} -o {plugin.name}.wasm</code>
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="versions" className="mt-0">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Version History</h3>
-                  <div className="space-y-4">
-                    {plugin.versions.map((version, index) => (
-                      <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline">{version.version}</Badge>
-                            <span className="text-sm text-muted-foreground">{version.date}</span>
+            <Tabs defaultValue="readme">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="readme">README</TabsTrigger>
+                <TabsTrigger value="installation">Installation</TabsTrigger>
+                <TabsTrigger value="versions">Versions</TabsTrigger>
+                <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="readme" className="mt-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="prose prose-gray max-w-none dark:prose-invert">
+                      <h1>Hello Plugin</h1>
+                      <p>This is a simple demonstration plugin for the Extism WebAssembly plugin framework.</p>
+                      <h2>Features</h2>
+                      <ul>
+                        <li>Simple greeting function</li>
+                        <li>Demonstrates basic Extism functionality</li>
+                        <li>Cross-language compatibility</li>
+                      </ul>
+                      <h2>Usage</h2>
+                      <p>
+                        Import the plugin in your host application and call the <code>greet</code> function 
+                        with a name to receive a personalized greeting.
+                      </p>
+                      <h2>API Reference</h2>
+                      <h3>greet(name: string): string</h3>
+                      <p>Returns a greeting message for the provided name.</p>
+                      <p><strong>Example:</strong> <code>greet("World")</code> returns <code>"Hello, World!"</code></p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="installation" className="mt-6 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Installation Steps</CardTitle>
+                    <CardDescription>
+                      Follow these steps to install and use {plugin.name} in your project
+                    </CardDescription>
+                    <div className="flex space-x-2 mt-4">
+                      <Button 
+                        variant={selectedLanguage === 'typescript' ? 'default' : 'outline'} 
+                        size="sm"
+                        onClick={() => setSelectedLanguage('typescript')}
+                      >
+                        TypeScript
+                      </Button>
+                      <Button 
+                        variant={selectedLanguage === 'python' ? 'default' : 'outline'} 
+                        size="sm"
+                        onClick={() => setSelectedLanguage('python')}
+                      >
+                        Python
+                      </Button>
+                      <Button 
+                        variant={selectedLanguage === 'go' ? 'default' : 'outline'} 
+                        size="sm"
+                        onClick={() => setSelectedLanguage('go')}
+                      >
+                        Go
+                      </Button>
+                      <Button 
+                        variant={selectedLanguage === 'rust' ? 'default' : 'outline'} 
+                        size="sm"
+                        onClick={() => setSelectedLanguage('rust')}
+                      >
+                        Rust
+                      </Button>
+                      <Button 
+                        variant={selectedLanguage === 'cpp' ? 'default' : 'outline'} 
+                        size="sm"
+                        onClick={() => setSelectedLanguage('cpp')}
+                      >
+                        C++
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <InstallationSteps language={selectedLanguage} pluginName={plugin.name} />
+                  </CardContent>
+                  <CardFooter>
+                    <Link href="/installation-guide">
+                      <Button variant="outline">View Full Installation Guide</Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="versions" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Version History</CardTitle>
+                    <CardDescription>
+                      Release history for {plugin.name}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {plugin.versions.map((version, index) => (
+                        <div key={index} className="border-b pb-4 last:border-0 last:pb-0">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-medium">v{version.version}</h3>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {version.changes}
+                              </p>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {version.date}
+                            </div>
                           </div>
-                          <p className="text-sm">{version.changes}</p>
                         </div>
-                        <Button variant="outline" size="sm" className="mt-2 sm:mt-0">
-                          Download
-                        </Button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="dependencies" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Dependencies</CardTitle>
+                    <CardDescription>
+                      Packages that {plugin.name} depends on
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {plugin.dependencies.map((dep, index) => (
+                        <div key={index} className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0">
+                          <div className="font-medium">{dep.name}</div>
+                          <div className="text-sm text-muted-foreground">{dep.version}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+          
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Installation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">With CLI:</div>
+                  <div className="bg-muted p-2 rounded-md text-sm font-mono">
+                    extism plugin install {plugin.name}
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        <div className="lg:w-1/4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dependencies</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {plugin.dependencies.map((dep, index) => (
-                  <li key={index} className="flex justify-between items-center">
-                    <span className="font-medium">{dep.name}</span>
-                    <Badge variant="secondary">{dep.version}</Badge>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Author</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="font-semibold text-primary">
-                    {plugin.author.charAt(0).toUpperCase()}
-                  </span>
                 </div>
-                <div>
-                  <p className="font-medium">{plugin.author}</p>
-                  <p className="text-sm text-muted-foreground">Author</p>
+                <div className="mt-4 space-y-2">
+                  <div className="text-sm font-medium">Import URL:</div>
+                  <div className="bg-muted p-2 rounded-md text-sm font-mono break-all">
+                    https://registry.extism.org/plugins/{plugin.name}/v{plugin.version}/plugin.wasm
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href={`/authors/${plugin.author}`}>View Profile</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Related Plugins</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="min-w-16 flex justify-center">golang</Badge>
-                  <Link href="/packages/go-plugin" className="text-sm hover:underline">go-plugin</Link>
+                <div className="mt-4">
+                  <Link href="/installation-guide">
+                    <Button variant="outline" className="w-full">View Installation Guide</Button>
+                  </Link>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="min-w-16 flex justify-center">python</Badge>
-                  <Link href="/packages/python-plugin" className="text-sm hover:underline">python-plugin</Link>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Related Plugins</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockPlugins
+                    .filter(p => p.name !== plugin.name && p.language === plugin.language)
+                    .slice(0, 3)
+                    .map((relatedPlugin, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <Link href={`/packages/${relatedPlugin.name}`} className="font-medium hover:underline">
+                          {relatedPlugin.name}
+                        </Link>
+                        <Badge variant="outline">v{relatedPlugin.version}</Badge>
+                      </div>
+                    ))
+                  }
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="min-w-16 flex justify-center">rust</Badge>
-                  <Link href="/packages/rust-plugin" className="text-sm hover:underline">rust-plugin</Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+              <CardFooter>
+                <Link href="/packages" className="text-sm text-primary hover:underline">
+                  View all packages
+                </Link>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
