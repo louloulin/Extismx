@@ -73,6 +73,35 @@ export interface TestConfig {
 }
 
 /**
+ * Plugin publish options
+ */
+export interface PublishOptions {
+  dryRun?: boolean;
+  tag?: string;
+  registry?: string;
+  access?: 'public' | 'restricted';
+  token?: string;
+  signPackage?: boolean;
+}
+
+/**
+ * Plugin publish result
+ */
+export interface PublishResult {
+  success: boolean;
+  message: string;
+  details: {
+    files?: string[];
+    publishUrl?: string;
+    error?: string;
+    output?: string;
+    errorCode?: string;
+    errorDetails?: any;
+    [key: string]: any;
+  };
+}
+
+/**
  * Plugin development environment
  */
 export interface DevEnvironment {

@@ -1,7 +1,9 @@
-// Mock Extism Plugin Development Kit (PDK) for TypeScript
-// This is a simplified version of the Extism PDK for demo purposes
+/**
+ * Mock Extism Plugin Development Kit (PDK) for TypeScript
+ * This is a simplified version of the Extism PDK for demonstration purposes
+ */
 
-// Mock state for the plugin
+// Mock state for the plugin execution
 const mockState: {
   input: string;
   output: string;
@@ -38,7 +40,7 @@ export namespace Host {
    */
   export function logString(message: string): void {
     // In a real PDK, this would use the host's logging mechanism
-    console.log(message);
+    console.log(`[Plugin Log] ${message}`);
   }
 
   /**
@@ -67,5 +69,13 @@ export namespace Host {
    */
   export function getMockOutput(): string {
     return mockState.output;
+  }
+  
+  /**
+   * Reset the mock state
+   */
+  export function resetMockState(): void {
+    mockState.input = "";
+    mockState.output = "";
   }
 } 
