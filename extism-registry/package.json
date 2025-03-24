@@ -23,7 +23,7 @@
     "@trpc/next": "^10.45.0",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
-    "next": "latest",
+    "next": "^15.2.3",
     "next-auth": "^4.24.5",
     "react": "latest",
     "react-dom": "latest",

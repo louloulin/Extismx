@@ -16,7 +16,8 @@
 		"test": "npm run build && npm run test-plugin && npm run test-integration && npm run test-registry && npm run test-community && npm run test-enterprise"
 	},
 	"dependencies": {
-		"@extism/extism": "2.0.0-rc11"
+		"@extism/extism": "2.0.0-rc11",
+		"next": "^15.2.3"
 	},
 	"devDependencies": {
 		"typescript": "^5.2.2"
