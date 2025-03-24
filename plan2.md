@@ -3,18 +3,20 @@
 从目录结构来看，代码主要分为以下几个部分：
 
 1. **核心注册表模块**：
-- `registry.ts` - 注册表核心实现
-- `registry-types.ts` - 类型定义
-- `registry-cli.ts` - 命令行接口
-- `registry-test.ts` - 测试文件
+✅ 已重构完成：
+- `src/core/registry/index.ts` - 注册表核心实现
+- `src/core/registry/types.ts` - 类型定义
+- `src/core/registry/storage.ts` - 存储接口和实现
 
 2. **插件开发工具包(PDK)**：
-- `python-pdk/`
-- `go-pdk/`
-- `rust-pdk/`
-- `cpp-pdk/`
-- `c-pdk/`
-- `extism-pdk.ts`
+✅ 已重构完成：
+- `src/core/pdk/common/` - 共享类型和基础类
+- `src/core/pdk/typescript/` - TypeScript PDK实现
+待实现：
+- `src/core/pdk/python/` - Python PDK
+- `src/core/pdk/rust/` - Rust PDK
+- `src/core/pdk/go/` - Go PDK
+- `src/core/pdk/cpp/` - C++ PDK
 
 3. **企业版功能**：
 - `enterprise-support.ts`
@@ -32,203 +34,114 @@
 - `utils/` 目录
 - `plugin-sign.ts`
 
-存在的模块化问题：
+已完成的重构：
 
-1. **目录结构不够清晰**：
-   - 测试文件散布在各处，没有统一放在 `tests` 目录下
-   - 核心功能和辅助功能混在一起
-   - PDK 相关代码虽然分目录但组织不够清晰
+1. **PDK模块重构**：
+   - ✅ 创建了清晰的目录结构
+   - ✅ 实现了TypeScript PDK
+   - ✅ 分离了共享代码
+   - ✅ 提供了完整的插件生命周期支持
 
-2. **职责分离不够明确**：
-   - 注册表核心功能和CLI混合在一起
-   - 企业版功能和社区版功能边界不清晰
-   - 集成模块和核心功能耦合度高
+2. **TypeScript PDK功能**：
+   - ✅ 构建器：编译TypeScript并生成WebAssembly
+   - ✅ 模板生成器：创建标准项目结构
+   - ✅ 测试器：运行测试和类型检查
+   - ✅ 发布器：发布到npm和版本管理
 
-3. **依赖关系不够清晰**：
-   - 缺少模块间依赖关系的文档
-   - 没有明确的模块入口文件
-   - 缺少模块级别的配置文件
+3. **注册表核心模块重构**：
+   - ✅ 分离了核心功能和存储层
+   - ✅ 实现了插件的完整生命周期管理
+   - ✅ 添加了插件状态和可见性控制
+   - ✅ 改进了错误处理和类型定义
+   - ✅ 支持插件查询和过滤
+   - ✅ 实现了内存存储适配器
 
-建议的改进方案：
+待完成的重构：
 
-```
-src/
-├── core/                           # 核心功能模块
-│   ├── registry/                   # 注册表核心
-│   │   ├── index.ts               # 模块入口
-│   │   ├── types.ts               # 类型定义
-│   │   ├── storage.ts             # 存储接口
-│   │   └── validation.ts          # 验证逻辑
-│   ├── security/                   # 安全相关
-│   │   ├── index.ts
-│   │   ├── signing.ts
-│   │   └── verification.ts
-│   └── config/                     # 配置管理
-│       ├── index.ts
-│       └── defaults.ts
-│
-├── pdk/                           # 插件开发工具包
-│   ├── common/                    # 共享代码
-│   │   ├── index.ts
-│   │   └── types.ts
-│   ├── python/
-│   ├── go/
-│   ├── rust/
-│   ├── cpp/
-│   └── c/
-│
-├── enterprise/                    # 企业版功能
-│   ├── index.ts
-│   ├── features/
-│   └── licensing/
-│
-├── cli/                          # 命令行工具
-│   ├── index.ts
-│   ├── commands/
-│   └── utils/
-│
-├── integrations/                 # 第三方集成
-│   ├── mastra/
-│   ├── mcp/
-│   └── common/
-│
-├── utils/                        # 通用工具
-│   ├── index.ts
-│   ├── logger.ts
-│   ├── errors.ts
-│   └── helpers.ts
-│
-└── tests/                        # 测试文件
-    ├── unit/                     # 单元测试
-    ├── integration/             # 集成测试
-    ├── e2e/                    # 端到端测试
-    └── fixtures/               # 测试数据
-```
+1. **目录结构优化**：
+   ```
+   src/
+   ├── core/                           # 核心功能模块
+   │   ├── security/                   # 安全相关
+   │   │   ├── index.ts
+   │   │   ├── signing.ts
+   │   │   └── verification.ts
+   │   └── config/                     # 配置管理
+   │       ├── index.ts
+   │       └── defaults.ts
+   ```
 
-具体改进建议：
+2. **配置管理**：
+   ```typescript
+   // core/config/index.ts
+   export interface RegistryConfig {
+     baseUrl: string;
+     storage: StorageConfig;
+     security: SecurityConfig;
+     // ...其他配置项
+   }
 
-1. **核心模块重构**：
-```typescript
-// core/registry/index.ts
-export interface IRegistryStorage {
-  savePlugin(plugin: Plugin): Promise<void>;
-  getPlugin(id: string): Promise<Plugin>;
-  // ...其他存储接口方法
-}
+   export function loadConfig(): RegistryConfig {
+     // 加载配置逻辑
+   }
+   ```
 
-export class Registry {
-  constructor(
-    private storage: IRegistryStorage,
-    private config: RegistryConfig
-  ) {}
-  
-  // 核心方法实现
-}
-```
+3. **CLI模块分离**：
+   ```typescript
+   // cli/commands/publish.ts
+   export class PublishCommand {
+     async execute(args: PublishArgs): Promise<void> {
+       // 发布命令实现
+     }
+   }
 
-2. **存储层抽象**：
-```typescript
-// core/registry/storage.ts
-export class MemoryStorage implements IRegistryStorage {
-  // 内存存储实现
-}
+   // cli/index.ts
+   export class CLI {
+     private commands: Map<string, Command>;
+     
+     async run(args: string[]): Promise<void> {
+       // CLI 入口逻辑
+     }
+   }
+   ```
 
-export class DatabaseStorage implements IRegistryStorage {
-  // 数据库存储实现
-}
-```
+4. **集成模块解耦**：
+   ```typescript
+   // integrations/common/types.ts
+   export interface IntegrationConfig {
+     // 集成配置接口
+   }
 
-3. **配置管理**：
-```typescript
-// core/config/index.ts
-export interface RegistryConfig {
-  baseUrl: string;
-  storage: StorageConfig;
-  security: SecurityConfig;
-  // ...其他配置项
-}
+   // integrations/mastra/index.ts
+   export class MastraIntegration implements Integration {
+     // Mastra 集成实现
+   }
+   ```
 
-export function loadConfig(): RegistryConfig {
-  // 加载配置逻辑
-}
-```
+5. **测试组织**：
+   ```typescript
+   // tests/unit/registry.test.ts
+   describe('Registry', () => {
+     // 单元测试
+   });
 
-4. **CLI模块分离**：
-```typescript
-// cli/commands/publish.ts
-export class PublishCommand {
-  async execute(args: PublishArgs): Promise<void> {
-    // 发布命令实现
-  }
-}
+   // tests/integration/storage.test.ts
+   describe('DatabaseStorage', () => {
+     // 集成测试
+   });
+   ```
 
-// cli/index.ts
-export class CLI {
-  private commands: Map<string, Command>;
-  
-  async run(args: string[]): Promise<void> {
-    // CLI 入口逻辑
-  }
-}
-```
+下一步建议：
 
-5. **集成模块解耦**：
-```typescript
-// integrations/common/types.ts
-export interface IntegrationConfig {
-  // 集成配置接口
-}
+1. 实现其他语言的PDK
+2. 实现安全模块
+3. 实现配置管理
+4. 分离CLI模块
+5. 重组测试文件
+6. 实现统一的错误处理
+7. 完善文档
 
-// integrations/mastra/index.ts
-export class MastraIntegration implements Integration {
-  // Mastra 集成实现
-}
-```
-
-6. **测试组织**：
-```typescript
-// tests/unit/registry.test.ts
-describe('Registry', () => {
-  // 单元测试
-});
-
-// tests/integration/storage.test.ts
-describe('DatabaseStorage', () => {
-  // 集成测试
-});
-```
-
-7. **错误处理统一**：
-```typescript
-// utils/errors.ts
-export class RegistryError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public details?: any
-  ) {
-    super(message);
-  }
-}
-
-export class ValidationError extends RegistryError {
-  // 验证错误实现
-}
-```
-
-8. **类型定义集中**：
-```typescript
-// core/registry/types.ts
-export interface Plugin {
-  // 插件接口定义
-}
-
-export type PluginMetadata = {
-  // 元数据类型定义
-}
-```
-
-这样的模块化结构将带来以下好处：
+这样的重构将带来以下好处：
 
 1. **更好的可维护性**：
    - 每个模块职责清晰

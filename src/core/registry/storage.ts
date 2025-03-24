@@ -1,165 +1,140 @@
-import { Plugin, PluginSearchParams, PluginSearchResults, PluginVersion } from './types';
+import { IRegistryStorage, Plugin, PluginQueryOptions, PluginQueryResult, PluginStatus, PluginVisibility, RegistryError, RegistryErrorType } from './types';
 
 /**
  * Registry storage interface
  */
 export interface IRegistryStorage {
   savePlugin(plugin: Plugin): Promise<void>;
-  getPlugin(id: string, version?: string): Promise<Plugin | null>;
-  deletePlugin(id: string, version?: string): Promise<boolean>;
-  searchPlugins(params: PluginSearchParams): Promise<PluginSearchResults>;
-  getPluginVersions(id: string): Promise<PluginVersion[]>;
+  getPlugin(id: string): Promise<Plugin | null>;
+  deletePlugin(id: string): Promise<void>;
+  queryPlugins(options: PluginQueryOptions): Promise<PluginQueryResult>;
   incrementDownloads(id: string): Promise<void>;
+  updateStatus(id: string, status: PluginStatus): Promise<void>;
+  updateVisibility(id: string, visibility: PluginVisibility): Promise<void>;
 }
 
 /**
  * In-memory storage implementation
  */
 export class MemoryStorage implements IRegistryStorage {
-  private packages: Map<string, Plugin> = new Map();
-  private versions: Map<string, Map<string, Plugin>> = new Map();
-  private tags: Map<string, Set<string>> = new Map();
-  private authors: Map<string, Set<string>> = new Map();
-  private languages: Map<string, Set<string>> = new Map();
+  private plugins: Map<string, Plugin> = new Map();
 
   async savePlugin(plugin: Plugin): Promise<void> {
-    // Store main package
-    this.packages.set(plugin.id, plugin);
-
-    // Store version
-    if (!this.versions.has(plugin.id)) {
-      this.versions.set(plugin.id, new Map());
+    if (this.plugins.has(plugin.id)) {
+      throw new RegistryError(
+        `Plugin with ID ${plugin.id} already exists`,
+        RegistryErrorType.PLUGIN_ALREADY_EXISTS
+      );
     }
-    this.versions.get(plugin.id)!.set(plugin.metadata.version, plugin);
-
-    // Index by tags
-    plugin.metadata.keywords.forEach(tag => {
-      if (!this.tags.has(tag)) {
-        this.tags.set(tag, new Set());
-      }
-      this.tags.get(tag)!.add(plugin.id);
-    });
-
-    // Index by author
-    if (!this.authors.has(plugin.metadata.author)) {
-      this.authors.set(plugin.metadata.author, new Set());
-    }
-    this.authors.get(plugin.metadata.author)!.add(plugin.id);
-
-    // Index by language
-    if (!this.languages.has(plugin.metadata.language)) {
-      this.languages.set(plugin.metadata.language, new Set());
-    }
-    this.languages.get(plugin.metadata.language)!.add(plugin.id);
+    this.plugins.set(plugin.id, { ...plugin });
   }
 
-  async getPlugin(id: string, version?: string): Promise<Plugin | null> {
-    if (version) {
-      return this.versions.get(id)?.get(version) || null;
-    }
-    return this.packages.get(id) || null;
+  async getPlugin(id: string): Promise<Plugin | null> {
+    const plugin = this.plugins.get(id);
+    return plugin ? { ...plugin } : null;
   }
 
-  async deletePlugin(id: string, version?: string): Promise<boolean> {
-    if (version) {
-      const versionMap = this.versions.get(id);
-      if (versionMap?.has(version)) {
-        versionMap.delete(version);
-        return true;
-      }
-      return false;
+  async deletePlugin(id: string): Promise<void> {
+    if (!this.plugins.has(id)) {
+      throw new RegistryError(
+        `Plugin with ID ${id} not found`,
+        RegistryErrorType.PLUGIN_NOT_FOUND
+      );
     }
-
-    const plugin = this.packages.get(id);
-    if (plugin) {
-      this.packages.delete(id);
-      this.versions.delete(id);
-      
-      // Remove from indexes
-      plugin.metadata.keywords.forEach(tag => {
-        this.tags.get(tag)?.delete(id);
-      });
-      this.authors.get(plugin.metadata.author)?.delete(id);
-      this.languages.get(plugin.metadata.language)?.delete(id);
-      
-      return true;
-    }
-    return false;
+    this.plugins.delete(id);
   }
 
-  async searchPlugins(params: PluginSearchParams): Promise<PluginSearchResults> {
-    let matchingIds = new Set<string>();
-    
-    // Start with all packages
-    this.packages.forEach((_, id) => matchingIds.add(id));
+  async queryPlugins(options: PluginQueryOptions): Promise<PluginQueryResult> {
+    let plugins = Array.from(this.plugins.values());
 
     // Apply filters
-    if (params.query) {
-      const query = params.query.toLowerCase();
-      matchingIds = new Set(
-        Array.from(matchingIds).filter(id => {
-          const pkg = this.packages.get(id)!;
-          return (
-            pkg.metadata.name.toLowerCase().includes(query) ||
-            pkg.metadata.description.toLowerCase().includes(query)
-          );
-        })
+    if (options.status) {
+      plugins = plugins.filter(p => p.status === options.status);
+    }
+    if (options.visibility) {
+      plugins = plugins.filter(p => p.visibility === options.visibility);
+    }
+    if (options.tags) {
+      plugins = plugins.filter(p => 
+        options.tags!.every(tag => p.metadata.tags?.includes(tag))
       );
     }
-
-    if (params.language) {
-      const languageIds = this.languages.get(params.language) || new Set();
-      matchingIds = new Set(
-        Array.from(matchingIds).filter(id => languageIds.has(id))
-      );
+    if (options.author) {
+      plugins = plugins.filter(p => p.metadata.author === options.author);
     }
-
-    if (params.author) {
-      const authorIds = this.authors.get(params.author) || new Set();
-      matchingIds = new Set(
-        Array.from(matchingIds).filter(id => authorIds.has(id))
-      );
-    }
-
-    if (params.tags && params.tags.length > 0) {
-      params.tags.forEach(tag => {
-        const tagIds = this.tags.get(tag) || new Set();
-        matchingIds = new Set(
-          Array.from(matchingIds).filter(id => tagIds.has(id))
+    if (options.runtime) {
+      plugins = plugins.filter(p => {
+        const runtime = p.metadata.runtime || {};
+        return Object.entries(options.runtime!).every(
+          ([key, value]) => runtime[key as keyof typeof runtime] === value
         );
       });
     }
 
+    // Apply sorting
+    if (options.sort) {
+      const { field, order } = options.sort;
+      plugins.sort((a, b) => {
+        const aValue = a[field];
+        const bValue = b[field];
+        if (aValue === undefined || bValue === undefined) {
+          return 0;
+        }
+        const orderMultiplier = order === 'asc' ? 1 : -1;
+        return aValue < bValue ? -orderMultiplier : aValue > bValue ? orderMultiplier : 0;
+      });
+    }
+
     // Apply pagination
-    const items = Array.from(matchingIds)
-      .map(id => this.packages.get(id)!)
-      .slice(params.offset || 0, (params.offset || 0) + (params.limit || 10));
+    const pagination = options.pagination || { page: 1, limit: 10 };
+    const start = (pagination.page - 1) * pagination.limit;
+    const end = start + pagination.limit;
+    const paginatedPlugins = plugins.slice(start, end);
 
     return {
-      total: matchingIds.size,
-      items,
-      nextOffset: items.length < matchingIds.size ? (params.offset || 0) + items.length : undefined
+      plugins: paginatedPlugins,
+      total: plugins.length,
+      page: pagination.page,
+      limit: pagination.limit,
+      hasMore: end < plugins.length
     };
   }
 
-  async getPluginVersions(id: string): Promise<PluginVersion[]> {
-    const versionMap = this.versions.get(id);
-    if (!versionMap) {
-      return [];
+  async incrementDownloads(id: string): Promise<void> {
+    const plugin = this.plugins.get(id);
+    if (!plugin) {
+      throw new RegistryError(
+        `Plugin with ID ${id} not found`,
+        RegistryErrorType.PLUGIN_NOT_FOUND
+      );
     }
-
-    return Array.from(versionMap.values()).map(plugin => ({
-      version: plugin.metadata.version,
-      created: plugin.created,
-      hash: plugin.hash,
-      size: plugin.size
-    }));
+    plugin.downloads++;
+    this.plugins.set(id, plugin);
   }
 
-  async incrementDownloads(id: string): Promise<void> {
-    const plugin = this.packages.get(id);
-    if (plugin) {
-      plugin.downloads++;
+  async updateStatus(id: string, status: PluginStatus): Promise<void> {
+    const plugin = this.plugins.get(id);
+    if (!plugin) {
+      throw new RegistryError(
+        `Plugin with ID ${id} not found`,
+        RegistryErrorType.PLUGIN_NOT_FOUND
+      );
     }
+    plugin.status = status;
+    plugin.updatedAt = new Date();
+    this.plugins.set(id, plugin);
+  }
+
+  async updateVisibility(id: string, visibility: PluginVisibility): Promise<void> {
+    const plugin = this.plugins.get(id);
+    if (!plugin) {
+      throw new RegistryError(
+        `Plugin with ID ${id} not found`,
+        RegistryErrorType.PLUGIN_NOT_FOUND
+      );
+    }
+    plugin.visibility = visibility;
+    plugin.updatedAt = new Date();
+    this.plugins.set(id, plugin);
   }
 } 

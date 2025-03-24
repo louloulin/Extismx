@@ -1,149 +1,172 @@
-import * as crypto from 'crypto';
-import { 
-  Plugin, 
-  PluginMetadata, 
-  PluginSearchParams, 
-  PluginSearchResults,
-  PluginVersion,
-  RegistryConfig 
-} from './types';
-import { IRegistryStorage } from './storage';
+import { createHash } from 'crypto';
+import { IRegistryStorage, Plugin, PluginMetadata, PluginQueryOptions, PluginQueryResult, PluginStatus, PluginVisibility, RegistryError, RegistryErrorType } from './types';
 
 /**
- * Core registry implementation
+ * Plugin registry implementation
  */
 export class Registry {
   constructor(
     private storage: IRegistryStorage,
-    private config: RegistryConfig
+    private config: {
+      allowPrivatePlugins?: boolean;
+      allowOrganizationPlugins?: boolean;
+      maxPluginSize?: number;
+      requiredTags?: string[];
+      validateMetadata?: (metadata: PluginMetadata) => Promise<void>;
+      validatePlugin?: (plugin: Plugin) => Promise<void>;
+    } = {}
   ) {}
 
   /**
-   * Generate a hash for plugin content
+   * Register a new plugin
    */
-  private generateHash(content: Buffer): string {
-    return crypto.createHash('sha256').update(content).digest('hex');
-  }
-
-  /**
-   * Generate a unique ID for a plugin
-   */
-  private generateId(name: string, author: string): string {
-    return `${author}/${name}`.toLowerCase();
-  }
-
-  /**
-   * Validate plugin metadata
-   */
-  private validateMetadata(metadata: PluginMetadata): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!metadata.name || metadata.name.trim() === '') {
-      errors.push('Plugin name is required');
-    }
-
-    if (!metadata.version || !/^\d+\.\d+\.\d+/.test(metadata.version)) {
-      errors.push('Plugin version must be in semver format (e.g., 1.0.0)');
-    }
-
-    if (!metadata.author || metadata.author.trim() === '') {
-      errors.push('Plugin author is required');
-    }
-
-    if (!metadata.license || metadata.license.trim() === '') {
-      errors.push('Plugin license is required');
-    }
-
-    if (!metadata.exports || metadata.exports.length === 0) {
-      errors.push('Plugin must export at least one function');
-    }
-
-    return { valid: errors.length === 0, errors };
-  }
-
-  /**
-   * Publish a new plugin
-   */
-  async publishPlugin(
+  async registerPlugin(
     metadata: PluginMetadata,
     content: Buffer,
-    signature?: string
-  ): Promise<{ success: boolean; message: string; plugin?: Plugin }> {
+    options: {
+      visibility?: PluginVisibility;
+      signature?: string;
+    } = {}
+  ): Promise<Plugin> {
+    // Validate plugin size
+    if (this.config.maxPluginSize && content.length > this.config.maxPluginSize) {
+      throw new RegistryError(
+        `Plugin size exceeds maximum allowed size of ${this.config.maxPluginSize} bytes`,
+        RegistryErrorType.VALIDATION_ERROR
+      );
+    }
+
     // Validate metadata
-    const validation = this.validateMetadata(metadata);
-    if (!validation.valid) {
-      return {
-        success: false,
-        message: `Invalid plugin metadata: ${validation.errors.join(', ')}`
-      };
+    if (this.config.validateMetadata) {
+      await this.config.validateMetadata(metadata);
     }
 
-    const id = this.generateId(metadata.name, metadata.author);
-    const existingPlugin = await this.storage.getPlugin(id, metadata.version);
-
-    if (existingPlugin) {
-      return {
-        success: false,
-        message: `Plugin version ${metadata.version} already exists`
-      };
+    // Validate required tags
+    if (this.config.requiredTags) {
+      const missingTags = this.config.requiredTags.filter(
+        tag => !metadata.tags?.includes(tag)
+      );
+      if (missingTags.length > 0) {
+        throw new RegistryError(
+          `Missing required tags: ${missingTags.join(', ')}`,
+          RegistryErrorType.VALIDATION_ERROR
+        );
+      }
     }
 
-    const hash = this.generateHash(content);
-    const now = new Date().toISOString();
+    // Validate visibility
+    const visibility = options.visibility || PluginVisibility.PUBLIC;
+    if (visibility === PluginVisibility.PRIVATE && !this.config.allowPrivatePlugins) {
+      throw new RegistryError(
+        'Private plugins are not allowed',
+        RegistryErrorType.PERMISSION_DENIED
+      );
+    }
+    if (visibility === PluginVisibility.ORGANIZATION && !this.config.allowOrganizationPlugins) {
+      throw new RegistryError(
+        'Organization plugins are not allowed',
+        RegistryErrorType.PERMISSION_DENIED
+      );
+    }
 
+    // Create plugin object
     const plugin: Plugin = {
+      id: this.generatePluginId(metadata),
       metadata,
-      id,
-      created: now,
-      updated: now,
+      hash: this.calculateHash(content),
+      signature: options.signature,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       downloads: 0,
-      size: content.length,
-      hash,
-      signature,
-      verified: this.config.security.enableSignatureVerification ? !!signature : true
+      status: PluginStatus.DRAFT,
+      visibility
     };
 
+    // Validate plugin
+    if (this.config.validatePlugin) {
+      await this.config.validatePlugin(plugin);
+    }
+
+    // Save plugin
     await this.storage.savePlugin(plugin);
 
-    return {
-      success: true,
-      message: 'Plugin published successfully',
-      plugin
-    };
+    return plugin;
   }
 
   /**
-   * Get a plugin by ID and optional version
+   * Get plugin by ID
    */
-  async getPlugin(id: string, version?: string): Promise<Plugin | null> {
-    return this.storage.getPlugin(id, version);
+  async getPlugin(id: string): Promise<Plugin> {
+    const plugin = await this.storage.getPlugin(id);
+    if (!plugin) {
+      throw new RegistryError(
+        `Plugin with ID ${id} not found`,
+        RegistryErrorType.PLUGIN_NOT_FOUND
+      );
+    }
+    return plugin;
   }
 
   /**
-   * Delete a plugin by ID and optional version
+   * Delete plugin by ID
    */
-  async deletePlugin(id: string, version?: string): Promise<boolean> {
-    return this.storage.deletePlugin(id, version);
+  async deletePlugin(id: string): Promise<void> {
+    await this.storage.deletePlugin(id);
   }
 
   /**
-   * Search for plugins
+   * Query plugins
    */
-  async searchPlugins(params: PluginSearchParams): Promise<PluginSearchResults> {
-    return this.storage.searchPlugins(params);
+  async queryPlugins(options: PluginQueryOptions): Promise<PluginQueryResult> {
+    return this.storage.queryPlugins(options);
   }
 
   /**
-   * Get all versions of a plugin
+   * Update plugin status
    */
-  async getPluginVersions(id: string): Promise<PluginVersion[]> {
-    return this.storage.getPluginVersions(id);
+  async updatePluginStatus(id: string, status: PluginStatus): Promise<void> {
+    await this.storage.updateStatus(id, status);
   }
 
   /**
-   * Increment plugin download count
+   * Update plugin visibility
    */
-  async incrementDownloads(id: string): Promise<void> {
+  async updatePluginVisibility(id: string, visibility: PluginVisibility): Promise<void> {
+    // Validate visibility
+    if (visibility === PluginVisibility.PRIVATE && !this.config.allowPrivatePlugins) {
+      throw new RegistryError(
+        'Private plugins are not allowed',
+        RegistryErrorType.PERMISSION_DENIED
+      );
+    }
+    if (visibility === PluginVisibility.ORGANIZATION && !this.config.allowOrganizationPlugins) {
+      throw new RegistryError(
+        'Organization plugins are not allowed',
+        RegistryErrorType.PERMISSION_DENIED
+      );
+    }
+
+    await this.storage.updateVisibility(id, visibility);
+  }
+
+  /**
+   * Record plugin download
+   */
+  async recordDownload(id: string): Promise<void> {
     await this.storage.incrementDownloads(id);
+  }
+
+  /**
+   * Generate plugin ID from metadata
+   */
+  private generatePluginId(metadata: PluginMetadata): string {
+    return `${metadata.name}@${metadata.version}`;
+  }
+
+  /**
+   * Calculate hash of plugin content
+   */
+  private calculateHash(content: Buffer): string {
+    return createHash('sha256').update(content).digest('hex');
   }
 } 
