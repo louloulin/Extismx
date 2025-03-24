@@ -8,7 +8,29 @@
 - `src/core/registry/types.ts` - 类型定义
 - `src/core/registry/storage.ts` - 存储接口和实现
 
-2. **插件开发工具包(PDK)**：
+2. **安全模块**：
+✅ 已重构完成：
+- `src/core/security/index.ts` - 安全模块导出和创建
+- `src/core/security/types.ts` - 安全相关类型定义
+- `src/core/security/signing.ts` - 签名功能实现
+- `src/core/security/verification.ts` - 验证功能实现
+- `src/core/security/keystore.ts` - 密钥管理实现
+
+3. **配置管理模块**：
+✅ 已重构完成：
+- `src/core/config/index.ts` - 配置管理核心实现
+- `src/core/config/types.ts` - 配置类型定义
+- `src/core/config/defaults.ts` - 默认配置值
+
+4. **CLI模块**：
+✅ 已重构完成：
+- `src/cli/index.ts` - CLI核心实现
+- `src/cli/types.ts` - CLI类型定义
+- `src/cli/bin.ts` - CLI入口脚本
+- `src/cli/commands/publish.ts` - 发布命令实现
+- `src/cli/commands/search.ts` - 搜索命令实现
+
+5. **插件开发工具包(PDK)**：
 ✅ 已重构完成：
 - `src/core/pdk/common/` - 共享类型和基础类
 - `src/core/pdk/typescript/` - TypeScript PDK实现
@@ -18,21 +40,20 @@
 - `src/core/pdk/go/` - Go PDK
 - `src/core/pdk/cpp/` - C++ PDK
 
-3. **企业版功能**：
+6. **企业版功能**：
 - `enterprise-support.ts`
 - `enterprise-test.ts`
 
-4. **集成模块**：
+7. **集成模块**：
 - `mastra-integration.ts`
 - `extism-mcp.ts`
 
-5. **测试相关**：
+8. **测试相关**：
 - `tests/` 目录
 - 各种测试文件（`*-test.ts/js`）
 
-6. **工具类**：
+9. **工具类**：
 - `utils/` 目录
-- `plugin-sign.ts`
 
 已完成的重构：
 
@@ -56,56 +77,33 @@
    - ✅ 支持插件查询和过滤
    - ✅ 实现了内存存储适配器
 
+4. **安全模块重构**：
+   - ✅ 创建了完整的安全模块目录结构
+   - ✅ 实现了多种签名算法支持(RSA-SHA256、ED25519、ECDSA_P256)
+   - ✅ 分离了密钥管理、签名和验证功能
+   - ✅ 添加了灵活的配置选项
+   - ✅ 改进了错误处理和类型安全
+   - ✅ 支持密钥生成和管理
+
+5. **配置管理模块重构**：
+   - ✅ 创建了配置管理核心类
+   - ✅ 实现了配置加载、验证和更新
+   - ✅ 支持从文件和环境变量加载配置
+   - ✅ 添加了错误处理和类型安全
+   - ✅ 提供了合理的默认配置
+   - ✅ 支持配置序列化和保存
+
+6. **CLI模块重构**：
+   - ✅ 创建了模块化的命令结构
+   - ✅ 实现了命令基础接口
+   - ✅ 分离了命令处理逻辑
+   - ✅ 改进了错误处理和结果呈现
+   - ✅ 添加了帮助和版本信息
+   - ✅ 支持从环境变量配置CLI行为
+
 待完成的重构：
 
-1. **目录结构优化**：
-   ```
-   src/
-   ├── core/                           # 核心功能模块
-   │   ├── security/                   # 安全相关
-   │   │   ├── index.ts
-   │   │   ├── signing.ts
-   │   │   └── verification.ts
-   │   └── config/                     # 配置管理
-   │       ├── index.ts
-   │       └── defaults.ts
-   ```
-
-2. **配置管理**：
-   ```typescript
-   // core/config/index.ts
-   export interface RegistryConfig {
-     baseUrl: string;
-     storage: StorageConfig;
-     security: SecurityConfig;
-     // ...其他配置项
-   }
-
-   export function loadConfig(): RegistryConfig {
-     // 加载配置逻辑
-   }
-   ```
-
-3. **CLI模块分离**：
-   ```typescript
-   // cli/commands/publish.ts
-   export class PublishCommand {
-     async execute(args: PublishArgs): Promise<void> {
-       // 发布命令实现
-     }
-   }
-
-   // cli/index.ts
-   export class CLI {
-     private commands: Map<string, Command>;
-     
-     async run(args: string[]): Promise<void> {
-       // CLI 入口逻辑
-     }
-   }
-   ```
-
-4. **集成模块解耦**：
+1. **集成模块解耦**：
    ```typescript
    // integrations/common/types.ts
    export interface IntegrationConfig {
@@ -118,7 +116,7 @@
    }
    ```
 
-5. **测试组织**：
+2. **测试组织**：
    ```typescript
    // tests/unit/registry.test.ts
    describe('Registry', () => {
@@ -133,13 +131,11 @@
 
 下一步建议：
 
-1. 实现其他语言的PDK
-2. 实现安全模块
-3. 实现配置管理
-4. 分离CLI模块
-5. 重组测试文件
-6. 实现统一的错误处理
-7. 完善文档
+1. 重组集成模块
+2. 重组测试文件
+3. 实现统一的错误处理
+4. 实现其他语言的PDK
+5. 完善文档
 
 这样的重构将带来以下好处：
 
@@ -163,11 +159,11 @@
    - 避免循环依赖
    - 更容易进行依赖注入
 
-建议按照这个结构逐步重构代码，可以分阶段进行：
+建议按照这个结构继续逐步重构代码，可以分阶段进行：
 
-1. 首先整理目录结构
-2. 然后重构核心模块
-3. 接着分离存储层
-4. 最后优化周边功能
+1. 首先重组集成模块
+2. 然后重组测试文件
+3. 接着实现统一的错误处理
+4. 最后优化其他功能
 
 这样可以确保重构过程平滑，不会影响现有功能的正常运行。
