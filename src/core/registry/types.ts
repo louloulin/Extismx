@@ -1,7 +1,5 @@
-// Type definitions for the Extism plugin registry
-
 /**
- * Plugin metadata
+ * Plugin metadata interface
  */
 export interface PluginMetadata {
   name: string;
@@ -20,9 +18,9 @@ export interface PluginMetadata {
 }
 
 /**
- * Plugin package information
+ * Plugin package interface
  */
-export interface PluginPackage {
+export interface Plugin {
   metadata: PluginMetadata;
   id: string;
   created: string;
@@ -35,7 +33,7 @@ export interface PluginPackage {
 }
 
 /**
- * Plugin search query parameters
+ * Plugin search parameters
  */
 export interface PluginSearchParams {
   query?: string;
@@ -51,7 +49,7 @@ export interface PluginSearchParams {
  */
 export interface PluginSearchResults {
   total: number;
-  items: PluginPackage[];
+  items: Plugin[];
   nextOffset?: number;
 }
 
@@ -66,38 +64,26 @@ export interface PluginVersion {
 }
 
 /**
- * Plugin dependency resolution result
+ * Registry configuration
  */
-export interface PluginDependencyResolution {
-  requested: string;
-  resolved: string;
-  package: PluginPackage;
+export interface RegistryConfig {
+  baseUrl: string;
+  storage: StorageConfig;
+  security: SecurityConfig;
 }
 
 /**
- * Plugin dependency graph
+ * Storage configuration
  */
-export interface PluginDependencyGraph {
-  root: PluginPackage;
-  dependencies: Record<string, PluginDependencyResolution>;
+export interface StorageConfig {
+  type: 'memory' | 'database';
+  options?: Record<string, any>;
 }
 
 /**
- * Plugin publish result
+ * Security configuration
  */
-export interface PluginPublishResult {
-  success: boolean;
-  package: PluginPackage;
-  message?: string;
-  warnings?: string[];
-}
-
-/**
- * Plugin download information
- */
-export interface PluginDownloadInfo {
-  downloadUrl: string;
-  size: number;
-  hash: string;
-  signature?: string;
+export interface SecurityConfig {
+  enableSignatureVerification: boolean;
+  publicKeyPath?: string;
 } 
