@@ -17,7 +17,8 @@
 	},
 	"dependencies": {
 		"@extism/extism": "2.0.0-rc11",
-		"next": "^15.2.3"
+		"next": "^15.2.3",
+		"node-fetch": "^3.3.2"
 	},
 	"devDependencies": {
 		"typescript": "^5.2.2"
