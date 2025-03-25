@@ -1,18 +1,18 @@
 /**
- * Test script for the Extism Plugin Enterprise Support
+ * Test script for the Enterprise Module
  */
 
-import { enterpriseSupport } from './enterprise-support';
+import enterprise from './index';
 
 /**
- * Main test function for enterprise support
+ * Main test function for enterprise module
  */
-async function testEnterpriseSupport() {
-  console.log('=== Testing Extism Plugin Enterprise Support ===\n');
+export async function testEnterpriseModule(): Promise<boolean> {
+  console.log('=== Testing Enterprise Module ===\n');
 
   // Test organization creation
   console.log('--- Test: Creating organizations ---');
-  const org1 = enterpriseSupport.createOrganization(
+  const org1 = enterprise.support.createOrganization(
     'Acme Corporation',
     'John Doe',
     'john@acmecorp.com',
@@ -20,7 +20,7 @@ async function testEnterpriseSupport() {
     '123 Main St, Anytown, USA',
     '555-123-4567'
   );
-  const org2 = enterpriseSupport.createOrganization(
+  const org2 = enterprise.support.createOrganization(
     'TechStartup Inc',
     'Jane Smith',
     'jane@techstartup.io',
@@ -36,14 +36,14 @@ async function testEnterpriseSupport() {
   const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endDate = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
 
-  const plan1 = enterpriseSupport.createSupportPlan(
+  const plan1 = enterprise.support.createSupportPlan(
     org1.id,
     'enterprise',
     startDate,
     endDate,
     ['john@acmecorp.com', 'support@acmecorp.com']
   );
-  const plan2 = enterpriseSupport.createSupportPlan(
+  const plan2 = enterprise.support.createSupportPlan(
     org2.id,
     'standard',
     startDate,
@@ -55,7 +55,7 @@ async function testEnterpriseSupport() {
   // Test support ticket creation
   console.log('\n--- Test: Creating support tickets ---');
   if (plan1 && plan2) {
-    const ticket1 = enterpriseSupport.createSupportTicket(
+    const ticket1 = enterprise.support.createSupportTicket(
       plan1.id,
       'john@acmecorp.com',
       'Cannot deploy custom plugin to production',
@@ -65,7 +65,7 @@ async function testEnterpriseSupport() {
       ['weather-plugin-123']
     );
 
-    const ticket2 = enterpriseSupport.createSupportTicket(
+    const ticket2 = enterprise.support.createSupportTicket(
       plan2.id,
       'jane@techstartup.io',
       'Need help with plugin authentication',
@@ -77,21 +77,21 @@ async function testEnterpriseSupport() {
     // Test ticket responses
     console.log('\n--- Test: Adding responses to tickets ---');
     if (ticket1 && ticket2) {
-      const response1 = enterpriseSupport.addTicketResponse(
+      const response1 = enterprise.support.addTicketResponse(
         ticket1.id,
         'support@extism.io',
         'Thanks for reporting this issue. Can you please provide your deployment configuration file?',
         false
       );
 
-      const response2 = enterpriseSupport.addTicketResponse(
+      const response2 = enterprise.support.addTicketResponse(
         ticket2.id,
         'support@extism.io',
         'Hello Jane, for plugin authentication, we recommend using JWT tokens. Here\'s a guide: https://docs.extism.io/auth',
         false
       );
 
-      const response3 = enterpriseSupport.addTicketResponse(
+      const response3 = enterprise.support.addTicketResponse(
         ticket2.id,
         'jane@techstartup.io',
         'Thanks for the quick response! We\'ll try implementing JWT authentication as suggested.',
@@ -103,7 +103,7 @@ async function testEnterpriseSupport() {
 
   // Test custom integration creation
   console.log('\n--- Test: Creating custom integration ---');
-  const integration = enterpriseSupport.createCustomIntegration(
+  const integration = enterprise.integration.createCustomIntegration(
     org1.id,
     'Enterprise SSO Integration',
     'Integrate Extism plugins with Acme\'s SSO system',
@@ -119,7 +119,7 @@ async function testEnterpriseSupport() {
   // Test milestone creation
   console.log('\n--- Test: Adding milestones to integration ---');
   if (integration) {
-    const milestone1 = enterpriseSupport.addIntegrationMilestone(
+    const milestone1 = enterprise.integration.addIntegrationMilestone(
       integration.id,
       'Planning Phase',
       'Detailed requirements gathering and architecture design',
@@ -127,7 +127,7 @@ async function testEnterpriseSupport() {
       ['Requirements document', 'Architecture diagram', 'Project timeline']
     );
 
-    const milestone2 = enterpriseSupport.addIntegrationMilestone(
+    const milestone2 = enterprise.integration.addIntegrationMilestone(
       integration.id,
       'Development Phase',
       'Implementation of the SSO integration',
@@ -135,7 +135,7 @@ async function testEnterpriseSupport() {
       ['SSO plugin code', 'Documentation', 'Test cases']
     );
 
-    const milestone3 = enterpriseSupport.addIntegrationMilestone(
+    const milestone3 = enterprise.integration.addIntegrationMilestone(
       integration.id,
       'Deployment Phase',
       'Deployment to production and handover',
@@ -143,36 +143,57 @@ async function testEnterpriseSupport() {
       ['Deployment guide', 'Admin training', 'Support handover']
     );
     console.log(`Added ${3} milestones to integration`);
+
+    // Test integration status update
+    console.log('\n--- Test: Updating integration status ---');
+    const statusUpdated = enterprise.integration.updateIntegrationStatus(
+      integration.id,
+      'development'
+    );
+    console.log(`Integration status updated: ${statusUpdated}`);
+
+    // Test milestone completion
+    console.log('\n--- Test: Completing milestone ---');
+    if (milestone1) {
+      const milestoneCompleted = enterprise.integration.completeMilestone(
+        integration.id,
+        milestone1.id
+      );
+      console.log(`Milestone completed: ${milestoneCompleted}`);
+    }
   }
 
-  // Test getting active support plans
+  // Test get active support plans
   console.log('\n--- Test: Getting active support plans ---');
-  const activePlans = enterpriseSupport.getActiveSupportPlans();
+  const activePlans = enterprise.support.getActiveSupportPlans();
   console.log(`Found ${activePlans.length} active support plans`);
 
-  // Test getting high priority tickets
+  // Test get high priority tickets
   console.log('\n--- Test: Getting high priority tickets ---');
-  const highPriorityTickets = enterpriseSupport.getHighPriorityTickets();
+  const highPriorityTickets = enterprise.support.getHighPriorityTickets();
   console.log(`Found ${highPriorityTickets.length} high priority tickets`);
 
-  console.log('\n=== Enterprise Support Tests Completed ===');
+  // Test get organization integrations
+  console.log('\n--- Test: Getting organization integrations ---');
+  const orgIntegrations = enterprise.integration.getOrganizationIntegrations(org1.id);
+  console.log(`Found ${orgIntegrations.length} integrations for ${org1.name}`);
+
+  console.log('\n=== Enterprise Module Tests Completed ===');
   return true;
 }
 
 // Run the test if this file is executed directly
 if (require.main === module) {
-  testEnterpriseSupport().then(success => {
+  testEnterpriseModule().then(success => {
     if (success) {
-      console.log('All enterprise support tests passed!');
+      console.log('All enterprise module tests passed!');
       process.exit(0);
     } else {
-      console.error('Some enterprise support tests failed!');
+      console.error('Some enterprise module tests failed!');
       process.exit(1);
     }
   }).catch(error => {
-    console.error('Error running enterprise support tests:', error);
+    console.error('Error running enterprise module tests:', error);
     process.exit(1);
   });
-}
-
-export { testEnterpriseSupport }; 
+} 
