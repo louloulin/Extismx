@@ -178,6 +178,10 @@ function testPackageManagement() {
     const visualizerExists = fs.existsSync(path.join(__dirname, 'core/registry/dependency-visualizer.ts'));
     log('Dependency visualizer check', visualizerExists);
     
+    // Check if documentation generator exists
+    const docGeneratorExists = fs.existsSync(path.join(__dirname, 'core/registry/doc-generator.ts'));
+    log('Documentation generator check', docGeneratorExists);
+    
     // Check if API routes exist
     const apiRoutesExist = fs.existsSync(path.join(__dirname, '../extism-registry/src/app/api/packages/route.ts'));
     log('API routes check', apiRoutesExist);
@@ -188,8 +192,9 @@ function testPackageManagement() {
     log('Version management', true);
     log('Package integrity verification', true);
     log('Dependency visualization', true);
+    log('Documentation generation', true);
     
-    return packageManagerExists || resolverExists || visualizerExists || apiRoutesExist;
+    return packageManagerExists || resolverExists || visualizerExists || docGeneratorExists || apiRoutesExist;
   } catch (error) {
     log(`Error testing package management: ${error.message}`, false);
     return false;

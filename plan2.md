@@ -10,6 +10,7 @@
 - `src/core/registry/package-manager.ts` - 包管理器实现
 - `src/core/registry/dependency-resolver.ts` - 依赖解析器实现
 - `src/core/registry/dependency-visualizer.ts` - 依赖可视化工具实现
+- `src/core/registry/doc-generator.ts` - 插件文档生成器实现
 
 2. **安全模块**：
 ✅ 已重构完成：
@@ -185,6 +186,7 @@
    - ✅ 实现了包管理器，迁移自旧版 fetch-utils
    - ✅ 实现了依赖解析器，支持依赖图构建和冲突解决
    - ✅ 实现了依赖可视化工具，支持以ASCII树、DOT图和JSON格式可视化依赖关系
+   - ✅ 实现了插件文档生成器，支持以Markdown、HTML和JSON格式生成插件文档
 
 9. **安全模块重构**：
    - ✅ 创建了完整的安全模块目录结构

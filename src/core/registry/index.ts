@@ -3,9 +3,10 @@ import { IRegistryStorage, Plugin, PluginMetadata, PluginQueryOptions, PluginQue
 import { PackageManager } from './package-manager';
 import { DependencyResolver } from './dependency-resolver';
 import { DependencyVisualizer } from './dependency-visualizer';
+import { DocGenerator, DocFormat } from './doc-generator';
 
-// Export package manager and dependency resolver
-export { PackageManager, DependencyResolver, DependencyVisualizer };
+// Export package manager, dependency resolver, dependency visualizer, and doc generator
+export { PackageManager, DependencyResolver, DependencyVisualizer, DocGenerator, DocFormat };
 
 /**
  * Plugin registry implementation
