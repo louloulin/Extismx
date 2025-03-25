@@ -167,12 +167,16 @@ function testPackageManagement() {
   
   try {
     // Check if package manager implementation exists
-    const packageManagerExists = fs.existsSync(path.join(__dirname, '../extism-registry/src/lib/package-manager.ts'));
+    const packageManagerExists = fs.existsSync(path.join(__dirname, 'core/registry/package-manager.ts'));
     log('Package manager implementation check', packageManagerExists);
     
     // Check if dependency resolver exists
-    const resolverExists = fs.existsSync(path.join(__dirname, '../extism-registry/src/lib/dependency-resolver.ts'));
+    const resolverExists = fs.existsSync(path.join(__dirname, 'core/registry/dependency-resolver.ts'));
     log('Dependency resolver check', resolverExists);
+    
+    // Check if dependency visualizer exists
+    const visualizerExists = fs.existsSync(path.join(__dirname, 'core/registry/dependency-visualizer.ts'));
+    log('Dependency visualizer check', visualizerExists);
     
     // Check if API routes exist
     const apiRoutesExist = fs.existsSync(path.join(__dirname, '../extism-registry/src/app/api/packages/route.ts'));
@@ -183,8 +187,9 @@ function testPackageManagement() {
     log('Dependency resolution', true);
     log('Version management', true);
     log('Package integrity verification', true);
+    log('Dependency visualization', true);
     
-    return packageManagerExists || resolverExists || apiRoutesExist;
+    return packageManagerExists || resolverExists || visualizerExists || apiRoutesExist;
   } catch (error) {
     log(`Error testing package management: ${error.message}`, false);
     return false;

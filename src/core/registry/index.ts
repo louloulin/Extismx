@@ -1,5 +1,11 @@
 import { createHash } from 'crypto';
 import { IRegistryStorage, Plugin, PluginMetadata, PluginQueryOptions, PluginQueryResult, PluginStatus, PluginVisibility, RegistryError, RegistryErrorType } from './types';
+import { PackageManager } from './package-manager';
+import { DependencyResolver } from './dependency-resolver';
+import { DependencyVisualizer } from './dependency-visualizer';
+
+// Export package manager and dependency resolver
+export { PackageManager, DependencyResolver, DependencyVisualizer };
 
 /**
  * Plugin registry implementation

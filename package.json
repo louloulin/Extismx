@@ -13,6 +13,7 @@
 		"test-cpp-plugin": "cd src/cpp-pdk && node test_plugin.js",
 		"test-community": "node dist/community-test.js",
 		"test-enterprise": "node dist/enterprise-test.js",
+		"test-dependency-vis": "node dist/core/registry/test-visualization.js",
 		"test": "npm run build && npm run test-plugin && npm run test-integration && npm run test-registry && npm run test-community && npm run test-enterprise"
 	},
 	"dependencies": {

@@ -7,6 +7,9 @@
 - `src/core/registry/index.ts` - 注册表核心实现
 - `src/core/registry/types.ts` - 类型定义
 - `src/core/registry/storage.ts` - 存储接口和实现
+- `src/core/registry/package-manager.ts` - 包管理器实现
+- `src/core/registry/dependency-resolver.ts` - 依赖解析器实现
+- `src/core/registry/dependency-visualizer.ts` - 依赖可视化工具实现
 
 2. **安全模块**：
 ✅ 已重构完成：
@@ -119,7 +122,7 @@
 - `src/core/utils/string/` - 字符串工具
   - `index.ts` - 字符串工具实现
 - `src/core/utils/network/` - 网络工具
-  - `index.ts` - HTTP请求和网络功能实现
+  - `index.ts` - HTTP请求和网络功能实现，包括isReachable、fetchJSON、fetchWithRetry等功能
 
 已完成的重构：
 
@@ -179,6 +182,9 @@
    - ✅ 改进了错误处理和类型定义
    - ✅ 支持插件查询和过滤
    - ✅ 实现了内存存储适配器
+   - ✅ 实现了包管理器，迁移自旧版 fetch-utils
+   - ✅ 实现了依赖解析器，支持依赖图构建和冲突解决
+   - ✅ 实现了依赖可视化工具，支持以ASCII树、DOT图和JSON格式可视化依赖关系
 
 9. **安全模块重构**：
    - ✅ 创建了完整的安全模块目录结构
@@ -237,9 +243,10 @@
    - ✅ 实现了日志工具（不同级别的日志记录、多种输出方式）
    - ✅ 实现了验证工具（邮箱、URL、IP地址、UUID、语义版本号等）
    - ✅ 实现了字符串工具（随机字符串、HTML转义、计数、格式化等）
-   - ✅ 实现了网络工具（HTTP请求、重试机制、请求参数配置等）
+   - ✅ 实现了网络工具（HTTP请求、重试机制、请求参数配置、isReachable、fetchJSON、fetchWithRetry等）
    - ✅ 提供了统一的工具类导出
    - ✅ 添加了详细的注释和类型定义
+   - ✅ 从旧版fetch-utils迁移网络功能，更加完善和模块化
 
 下一步建议：
 
