@@ -15,7 +15,8 @@
 		"test-enterprise": "node dist/enterprise-test.js",
 		"test-dependency-vis": "node dist/core/registry/test-visualization.js",
 		"test-doc-generator": "node dist/core/registry/test-doc-generator.js",
-		"test": "npm run build && npm run test-plugin && npm run test-integration && npm run test-registry && npm run test-community && npm run test-enterprise"
+		"test-network-utils": "node dist/core/utils/network/test.js",
+		"test": "npm run build && npm run test-plugin && npm run test-integration && npm run test-registry && npm run test-community && npm run test-enterprise && npm run test-network-utils"
 	},
 	"dependencies": {
 		"@extism/extism": "2.0.0-rc11",
