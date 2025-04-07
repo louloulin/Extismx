@@ -14,7 +14,9 @@ describe('MemoryStorage Integration', () => {
       metadata: {
         name: 'test-plugin',
         version: '1.0.0',
-        runtime: 'node16',
+        runtime: {
+          node: true
+        },
         dependencies: {},
       },
       hash: 'test-hash',
@@ -22,7 +24,7 @@ describe('MemoryStorage Integration', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       downloads: 0,
-      status: PluginStatus.ACTIVE,
+      status: PluginStatus.DRAFT,
       visibility: PluginVisibility.PUBLIC,
     };
 
@@ -30,16 +32,19 @@ describe('MemoryStorage Integration', () => {
       await storage.savePlugin(testPlugin);
       const retrieved = await storage.getPlugin(testPlugin.id);
       
-      expect(retrieved).toBeDefined();
-      expect(retrieved.id).toBe(testPlugin.id);
-      expect(retrieved.metadata).toEqual(testPlugin.metadata);
+      expect(retrieved).not.toBeNull();
+      if (retrieved) {
+        expect(retrieved.id).toBe(testPlugin.id);
+        expect(retrieved.metadata).toEqual(testPlugin.metadata);
+      }
     });
 
     it('should delete a plugin', async () => {
       await storage.savePlugin(testPlugin);
       await storage.deletePlugin(testPlugin.id);
       
-      await expect(storage.getPlugin(testPlugin.id)).rejects.toThrow('Plugin not found');
+      const retrieved = await storage.getPlugin(testPlugin.id);
+      expect(retrieved).toBeNull();
     });
 
     it('should update plugin status', async () => {
@@ -47,7 +52,10 @@ describe('MemoryStorage Integration', () => {
       await storage.updateStatus(testPlugin.id, PluginStatus.DISABLED);
       
       const updated = await storage.getPlugin(testPlugin.id);
-      expect(updated.status).toBe(PluginStatus.DISABLED);
+      expect(updated).not.toBeNull();
+      if (updated) {
+        expect(updated.status).toBe(PluginStatus.DISABLED);
+      }
     });
 
     it('should update plugin visibility', async () => {
@@ -55,7 +63,10 @@ describe('MemoryStorage Integration', () => {
       await storage.updateVisibility(testPlugin.id, PluginVisibility.PRIVATE);
       
       const updated = await storage.getPlugin(testPlugin.id);
-      expect(updated.visibility).toBe(PluginVisibility.PRIVATE);
+      expect(updated).not.toBeNull();
+      if (updated) {
+        expect(updated.visibility).toBe(PluginVisibility.PRIVATE);
+      }
     });
 
     it('should increment download count', async () => {
@@ -63,7 +74,10 @@ describe('MemoryStorage Integration', () => {
       await storage.incrementDownloads(testPlugin.id);
       
       const updated = await storage.getPlugin(testPlugin.id);
-      expect(updated.downloads).toBe(1);
+      expect(updated).not.toBeNull();
+      if (updated) {
+        expect(updated.downloads).toBe(1);
+      }
     });
   });
 
@@ -75,7 +89,9 @@ describe('MemoryStorage Integration', () => {
           metadata: {
             name: 'plugin-1',
             version: '1.0.0',
-            runtime: 'node16',
+            runtime: {
+              node: true
+            },
             dependencies: {},
             tags: ['test', 'demo'],
           },
@@ -84,7 +100,7 @@ describe('MemoryStorage Integration', () => {
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
           downloads: 10,
-          status: PluginStatus.ACTIVE,
+          status: PluginStatus.DRAFT,
           visibility: PluginVisibility.PUBLIC,
         },
         {
@@ -92,7 +108,9 @@ describe('MemoryStorage Integration', () => {
           metadata: {
             name: 'plugin-2',
             version: '2.0.0',
-            runtime: 'node16',
+            runtime: {
+              node: true
+            },
             dependencies: {},
             tags: ['test', 'production'],
           },
@@ -101,7 +119,7 @@ describe('MemoryStorage Integration', () => {
           createdAt: new Date('2024-01-02'),
           updatedAt: new Date('2024-01-02'),
           downloads: 20,
-          status: PluginStatus.ACTIVE,
+          status: PluginStatus.DRAFT,
           visibility: PluginVisibility.PRIVATE,
         },
       ];
@@ -117,30 +135,34 @@ describe('MemoryStorage Integration', () => {
         visibility: PluginVisibility.PRIVATE,
       });
 
-      expect(results.items).toHaveLength(1);
-      expect(results.items[0].metadata.name).toBe('plugin-2');
+      expect(results.plugins).toHaveLength(1);
+      expect(results.plugins[0].metadata.name).toBe('plugin-2');
     });
 
     it('should sort plugins by downloads', async () => {
       const results = await storage.queryPlugins({
-        sortBy: 'downloads',
-        sortOrder: 'desc',
+        sort: {
+          field: 'downloads',
+          order: 'desc'
+        }
       });
 
-      expect(results.items).toHaveLength(2);
-      expect(results.items[0].downloads).toBe(20);
-      expect(results.items[1].downloads).toBe(10);
+      expect(results.plugins).toHaveLength(2);
+      expect(results.plugins[0].downloads).toBe(20);
+      expect(results.plugins[1].downloads).toBe(10);
     });
 
     it('should paginate results', async () => {
       const results = await storage.queryPlugins({
-        limit: 1,
-        offset: 1,
+        pagination: {
+          page: 2,
+          limit: 1
+        }
       });
 
-      expect(results.items).toHaveLength(1);
+      expect(results.plugins).toHaveLength(1);
       expect(results.total).toBe(2);
-      expect(results.items[0].metadata.name).toBe('plugin-2');
+      expect(results.plugins[0].metadata.name).toBe('plugin-2');
     });
   });
 }); 

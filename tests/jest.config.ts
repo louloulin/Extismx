@@ -1,9 +1,10 @@
 import type { Config } from '@jest/types';
+import path from 'path';
 
 const config: Config.InitialOptions = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>'],
+  rootDir: path.resolve(__dirname, '..'),
   testMatch: [
     '**/tests/**/*.test.ts',
     '**/tests/**/*.spec.ts'
@@ -21,5 +22,7 @@ const config: Config.InitialOptions = {
   ],
   verbose: true,
   testTimeout: 10000,
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
-}; 
+  setupFilesAfterEnv: ['./tests/setup.ts']
+};
+
+export default config; 

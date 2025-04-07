@@ -1,6 +1,6 @@
 import { Registry } from '../../src/core/registry';
 import { MemoryStorage } from '../../src/core/registry/storage';
-import { Plugin, PluginMetadata, PluginStatus, PluginVisibility } from '../../src/core/registry/types';
+import { Plugin, PluginMetadata, PluginStatus, PluginVisibility, RegistryError, RegistryErrorType } from '../../src/core/registry/types';
 
 describe('Registry', () => {
   let registry: Registry;
@@ -8,28 +8,38 @@ describe('Registry', () => {
 
   beforeEach(() => {
     storage = new MemoryStorage();
-    registry = new Registry(storage);
+    registry = new Registry(storage, {
+      allowPrivatePlugins: true,
+      allowOrganizationPlugins: true,
+      validateMetadata: async (metadata: PluginMetadata) => {
+        if (!metadata.name || metadata.name.trim() === '') {
+          throw new RegistryError('Invalid plugin metadata', RegistryErrorType.VALIDATION_ERROR);
+        }
+      }
+    });
   });
 
   describe('registerPlugin', () => {
     const validMetadata: PluginMetadata = {
       name: 'test-plugin',
       version: '1.0.0',
-      runtime: 'node16',
+      runtime: {
+        node: true
+      },
       dependencies: {},
     };
 
     it('should register a valid plugin', async () => {
       const plugin = await registry.registerPlugin(
-        Buffer.from('test-content'),
         validMetadata,
-        PluginVisibility.PUBLIC
+        Buffer.from('test-content'),
+        { visibility: PluginVisibility.PUBLIC }
       );
 
       expect(plugin).toBeDefined();
       expect(plugin.metadata).toEqual(validMetadata);
       expect(plugin.visibility).toBe(PluginVisibility.PUBLIC);
-      expect(plugin.status).toBe(PluginStatus.ACTIVE);
+      expect(plugin.status).toBe(PluginStatus.DRAFT);
     });
 
     it('should reject invalid metadata', async () => {
@@ -37,24 +47,24 @@ describe('Registry', () => {
       
       await expect(
         registry.registerPlugin(
-          Buffer.from('test-content'),
           invalidMetadata,
-          PluginVisibility.PUBLIC
+          Buffer.from('test-content'),
+          { visibility: PluginVisibility.PUBLIC }
         )
       ).rejects.toThrow('Invalid plugin metadata');
     });
 
     it('should generate unique plugin IDs', async () => {
       const plugin1 = await registry.registerPlugin(
-        Buffer.from('content-1'),
         validMetadata,
-        PluginVisibility.PUBLIC
+        Buffer.from('content-1'),
+        { visibility: PluginVisibility.PUBLIC }
       );
 
       const plugin2 = await registry.registerPlugin(
-        Buffer.from('content-2'),
         { ...validMetadata, version: '1.0.1' },
-        PluginVisibility.PUBLIC
+        Buffer.from('content-2'),
+        { visibility: PluginVisibility.PUBLIC }
       );
 
       expect(plugin1.id).not.toBe(plugin2.id);
@@ -67,14 +77,16 @@ describe('Registry', () => {
       const metadata: PluginMetadata = {
         name: 'test-plugin',
         version: '1.0.0',
-        runtime: 'node16',
+        runtime: {
+          node: true
+        },
         dependencies: {},
       };
 
       const registered = await registry.registerPlugin(
-        content,
         metadata,
-        PluginVisibility.PUBLIC
+        content,
+        { visibility: PluginVisibility.PUBLIC }
       );
 
       const retrieved = await registry.getPlugin(registered.id);
@@ -85,7 +97,7 @@ describe('Registry', () => {
 
     it('should throw error for non-existent plugin', async () => {
       await expect(registry.getPlugin('non-existent-id')).rejects.toThrow(
-        'Plugin not found'
+        /Plugin.*not found/
       );
     });
   });
@@ -99,7 +111,9 @@ describe('Registry', () => {
           metadata: {
             name: 'plugin-1',
             version: '1.0.0',
-            runtime: 'node16',
+            runtime: {
+              node: true
+            },
             dependencies: {},
             tags: ['test', 'demo'],
           },
@@ -110,7 +124,9 @@ describe('Registry', () => {
           metadata: {
             name: 'plugin-2',
             version: '2.0.0',
-            runtime: 'node16',
+            runtime: {
+              node: true
+            },
             dependencies: {},
             tags: ['test', 'production'],
           },
@@ -120,9 +136,9 @@ describe('Registry', () => {
 
       for (const plugin of plugins) {
         await registry.registerPlugin(
-          plugin.content,
           plugin.metadata,
-          plugin.visibility
+          plugin.content,
+          { visibility: plugin.visibility }
         );
       }
     });
@@ -132,8 +148,8 @@ describe('Registry', () => {
         tags: ['production'],
       });
 
-      expect(results.items).toHaveLength(1);
-      expect(results.items[0].metadata.name).toBe('plugin-2');
+      expect(results.plugins).toHaveLength(1);
+      expect(results.plugins[0].metadata.name).toBe('plugin-2');
     });
 
     it('should filter plugins by visibility', async () => {
@@ -141,17 +157,19 @@ describe('Registry', () => {
         visibility: PluginVisibility.PUBLIC,
       });
 
-      expect(results.items).toHaveLength(1);
-      expect(results.items[0].metadata.name).toBe('plugin-1');
+      expect(results.plugins).toHaveLength(1);
+      expect(results.plugins[0].metadata.name).toBe('plugin-1');
     });
 
     it('should support pagination', async () => {
       const results = await registry.queryPlugins({
-        limit: 1,
-        offset: 0,
+        pagination: {
+          page: 2,
+          limit: 1
+        }
       });
 
-      expect(results.items).toHaveLength(1);
+      expect(results.plugins).toHaveLength(1);
       expect(results.total).toBe(2);
     });
   });

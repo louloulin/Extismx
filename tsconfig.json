@@ -10,10 +10,12 @@
     "sourceMap": true,
     "declaration": true,
     "baseUrl": ".",
+    "isolatedModules": true,
     "paths": {
       "*": ["node_modules/*"]
-    }
+    },
+    "types": ["node", "jest"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "**/*.test.ts"]
 } 
